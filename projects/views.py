@@ -1,8 +1,8 @@
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, render, redirect
-from django.http import HttpResponse, HttpResponseForbidden, HttpResponseNotAllowed, JsonResponse
+from django.http import HttpResponseForbidden, HttpResponseNotAllowed, JsonResponse
 
+from team_finder.pagination import paginate_queryset
 from .models import Project
 from .forms import ProjectForm
 
@@ -18,9 +18,11 @@ def project_list(request):
         .order_by('-created_at')
     )
 
-    paginator = Paginator(projects, PROJECTS_PER_PAGE)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    page_obj, query_prefix = paginate_queryset(
+        request,
+        projects,
+        PROJECTS_PER_PAGE,
+    )
 
     return render(
         request,
@@ -28,7 +30,7 @@ def project_list(request):
         {
             'projects': projects,
             'page_obj': page_obj,
-            'query_prefix': '',
+            'query_prefix': query_prefix,
         }
     )
 
@@ -160,7 +162,7 @@ def toggle_participate(request, project_id):
             status=400,
         )
 
-    if request.user in project.participants.all():
+    if project.participants.filter(id=request.user.id).exists():
         project.participants.remove(request.user)
         participant = False
     else:

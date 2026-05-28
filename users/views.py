@@ -1,8 +1,8 @@
 from django.contrib.auth import get_user_model, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
 
+from team_finder.pagination import paginate_queryset
 from .forms import (
     CustomPasswordChangeForm,
     LoginForm,
@@ -52,6 +52,7 @@ def login_view(request):
         }
     )
 
+@login_required
 def logout_view(request):
     logout(request)
     return redirect('projects:project_list')
@@ -83,13 +84,11 @@ def user_list(request):
 
         users = users.exclude(id=current_user.id).distinct().order_by('-id')
 
-    paginator = Paginator(users, USERS_PER_PAGE)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    query_prefix = ''
-    if active_filter:
-        query_prefix = f'filter={active_filter}&'
+    page_obj, query_prefix = paginate_queryset(
+        request,
+        users,
+        USERS_PER_PAGE,
+    )
 
     return render(
         request,
