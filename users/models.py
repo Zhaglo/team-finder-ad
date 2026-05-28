@@ -3,10 +3,11 @@ from django.db import models
 
 from projects.models import Project
 from .managers import UserManager
+from .avatar import generate_user_avatar
 
 
 def user_avatar_upload_path(instance, filename):
-    return f'users/{instance.id}/avatars/{filename}'
+    return f'users/avatars/{filename}'
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -63,6 +64,13 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['name', 'surname']
+
+    def save(self, *args, **kwargs):
+        if not self.avatar:
+            filename, avatar_file = generate_user_avatar(self.name)
+            self.avatar.save(filename, avatar_file, save=False)
+
+        super().save(*args, **kwargs)
 
     class Meta:
         ordering = ('-id',)

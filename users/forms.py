@@ -91,6 +91,12 @@ class ProfileEditForm(forms.ModelForm):
             'github_url': 'GitHub',
         }
         widgets = {
+            'avatar': forms.FileInput(
+                attrs={
+                    'class': 'hidden-avatar-input',
+                    'accept': 'image/*',
+                }
+            ),
             'about': forms.Textarea(attrs={'rows': 4}),
         }
 
