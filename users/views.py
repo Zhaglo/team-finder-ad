@@ -34,6 +34,7 @@ def register(request):
         }
     )
 
+
 def login_view(request):
     if request.method == 'POST':
         form = LoginForm(request, request.POST)
@@ -52,10 +53,12 @@ def login_view(request):
         }
     )
 
+
 @login_required
 def logout_view(request):
     logout(request)
     return redirect('projects:project_list')
+
 
 def user_list(request):
     active_filter = request.GET.get('filter')
@@ -101,6 +104,7 @@ def user_list(request):
         }
     )
 
+
 def user_detail(request, user_id):
     user = get_object_or_404(
         User.objects.prefetch_related('owned_projects__participants'),
@@ -114,6 +118,7 @@ def user_detail(request, user_id):
             'user': user,
         }
     )
+
 
 @login_required
 def edit_profile(request):
@@ -138,6 +143,7 @@ def edit_profile(request):
             'user': request.user,
         }
     )
+
 
 @login_required
 def change_password(request):

@@ -34,6 +34,7 @@ def project_list(request):
         }
     )
 
+
 def project_detail(request, project_id):
     project = get_object_or_404(
         Project.objects
@@ -49,6 +50,7 @@ def project_detail(request, project_id):
             'project': project,
         }
     )
+
 
 @login_required
 def favorite_projects(request):
@@ -66,6 +68,7 @@ def favorite_projects(request):
             'projects': projects,
         }
     )
+
 
 @login_required
 def create_project(request):
@@ -90,6 +93,7 @@ def create_project(request):
             'is_edit': False,
         }
     )
+
 
 @login_required
 def edit_project(request, project_id):
@@ -116,6 +120,7 @@ def edit_project(request, project_id):
             'is_edit': True,
         }
     )
+
 
 @login_required
 def complete_project(request, project_id):
@@ -146,6 +151,7 @@ def complete_project(request, project_id):
         }
     )
 
+
 @login_required
 def toggle_participate(request, project_id):
     if request.method != 'POST':
@@ -175,6 +181,7 @@ def toggle_participate(request, project_id):
             'participant': participant,
         }
     )
+
 
 @login_required
 def toggle_favorite(request, project_id):
