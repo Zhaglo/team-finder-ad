@@ -1,22 +1,24 @@
+from http import HTTPStatus
+
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
-from django.http import HttpResponseForbidden, HttpResponseNotAllowed, JsonResponse
+from django.views.decorators.http import require_POST
 
+from team_finder.constants import PROJECTS_PER_PAGE
 from team_finder.pagination import paginate_queryset
-from .models import Project
+
 from .forms import ProjectForm
-
-
-PROJECTS_PER_PAGE = 12
+from .models import Project
+from .selectors import (
+    get_favorite_projects_for_user,
+    get_projects_list,
+    get_projects_with_related,
+)
 
 
 def project_list(request):
-    projects = (
-        Project.objects
-        .select_related('owner')
-        .prefetch_related('participants')
-        .order_by('-created_at')
-    )
+    projects = get_projects_list()
 
     page_obj, query_prefix = paginate_queryset(
         request,
@@ -37,9 +39,7 @@ def project_list(request):
 
 def project_detail(request, project_id):
     project = get_object_or_404(
-        Project.objects
-        .select_related('owner')
-        .prefetch_related('participants'),
+        get_projects_with_related(),
         id=project_id
     )
 
@@ -54,12 +54,7 @@ def project_detail(request, project_id):
 
 @login_required
 def favorite_projects(request):
-    projects = (
-        request.user.favorites
-        .select_related('owner')
-        .prefetch_related('participants')
-        .order_by('-created_at')
-    )
+    projects = get_favorite_projects_for_user(request.user)
 
     return render(
         request,
@@ -72,18 +67,15 @@ def favorite_projects(request):
 
 @login_required
 def create_project(request):
-    if request.method == 'POST':
-        form = ProjectForm(request.POST)
+    form = ProjectForm(request.POST or None)
 
-        if form.is_valid():
-            project = form.save(commit=False)
-            project.owner = request.user
-            project.save()
-            project.participants.add(request.user)
+    if form.is_valid():
+        project = form.save(commit=False)
+        project.owner = request.user
+        project.save()
+        project.participants.add(request.user)
 
-            return redirect('projects:project_detail', project_id=project.id)
-    else:
-        form = ProjectForm()
+        return redirect('projects:project_detail', project_id=project.id)
 
     return render(
         request,
@@ -102,15 +94,11 @@ def edit_project(request, project_id):
     if project.owner != request.user:
         return HttpResponseForbidden('Редактировать проект может только автор!')
 
-    if request.method == 'POST':
-        form = ProjectForm(request.POST, instance=project)
+    form = ProjectForm(request.POST or None, instance=project)
 
-        if form.is_valid():
-            form.save()
-            return redirect('projects:project_detail', project_id=project.id)
-
-    else:
-        form = ProjectForm(instance=project)
+    if form.is_valid():
+        form.save()
+        return redirect('projects:project_detail', project_id=project.id)
 
     return render(
         request,
@@ -123,14 +111,18 @@ def edit_project(request, project_id):
 
 
 @login_required
+@require_POST
 def complete_project(request, project_id):
-    if request.method != 'POST':
-        return HttpResponseNotAllowed(['POST'])
-
     project = get_object_or_404(Project, id=project_id)
 
     if project.owner != request.user:
-        return JsonResponse({'status': 'error', 'detail': 'forbidden'}, status=403)
+        return JsonResponse(
+            {
+                'status': 'error',
+                'detail': 'forbidden'
+            },
+            status=HTTPStatus.FORBIDDEN,
+        )
 
     if project.status != Project.Status.OPEN:
         return JsonResponse(
@@ -138,7 +130,7 @@ def complete_project(request, project_id):
                 'status': 'error',
                 'detail': 'project is already closed'
             },
-            status=400
+            status=HTTPStatus.BAD_REQUEST,
         )
 
     project.status = Project.Status.CLOSED
@@ -153,10 +145,8 @@ def complete_project(request, project_id):
 
 
 @login_required
+@require_POST
 def toggle_participate(request, project_id):
-    if request.method != 'POST':
-        return HttpResponseNotAllowed(['POST'])
-
     project = get_object_or_404(Project, id=project_id)
 
     if project.owner == request.user:
@@ -165,41 +155,39 @@ def toggle_participate(request, project_id):
                 'status': 'error',
                 'detail': 'owner cannot toggle participation',
             },
-            status=400,
+            status=HTTPStatus.BAD_REQUEST,
         )
 
-    if project.participants.filter(id=request.user.id).exists():
+    participant = project.participants.filter(id=request.user.id).exists()
+
+    if participant:
         project.participants.remove(request.user)
-        participant = False
     else:
         project.participants.add(request.user)
-        participant = True
 
     return JsonResponse(
         {
             'status': 'ok',
-            'participant': participant,
+            'participant': not participant,
         }
     )
 
 
 @login_required
+@require_POST
 def toggle_favorite(request, project_id):
-    if request.method != 'POST':
-        return HttpResponseNotAllowed(['POST'])
-
     project = get_object_or_404(Project, id=project_id)
 
-    if request.user.favorites.filter(id=project.id).exists():
+    favorited = request.user.favorites.filter(id=project.id).exists()
+
+    if favorited:
         request.user.favorites.remove(project)
-        favorited = False
     else:
         request.user.favorites.add(project)
-        favorited = True
 
     return JsonResponse(
         {
             'status': 'ok',
-            'favorited': favorited,
+            'favorited': not favorited,
         }
     )
