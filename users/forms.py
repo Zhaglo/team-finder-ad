@@ -8,15 +8,10 @@ from django.core.exceptions import ValidationError
 from team_finder.form_mixins import GithubUrlValidatorMixin
 
 from .models import User
+from .services import normalize_phone
 
 
 PHONE_PATTERN = re.compile(r'^(\+7|8)\d{10}$')
-
-
-def normalize_phone(phone):
-    if phone.startswith('8'):
-        return '+7' + phone[1:]
-    return phone
 
 
 class RegisterForm(forms.ModelForm):
@@ -28,11 +23,6 @@ class RegisterForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ('name', 'surname', 'email', 'password')
-        labels = {
-            'name': 'Имя',
-            'surname': 'Фамилия',
-            'email': 'Email',
-        }
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -84,14 +74,6 @@ class ProfileEditForm(GithubUrlValidatorMixin, forms.ModelForm):
     class Meta:
         model = User
         fields = ('name', 'surname', 'avatar', 'about', 'phone', 'github_url')
-        labels = {
-            'name': 'Имя',
-            'surname': 'Фамилия',
-            'avatar': 'Аватар',
-            'about': 'О себе',
-            'phone': 'Телефон',
-            'github_url': 'GitHub',
-        }
         widgets = {
             'avatar': forms.FileInput(
                 attrs={
