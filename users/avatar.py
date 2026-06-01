@@ -6,20 +6,12 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from PIL import Image, ImageDraw, ImageFont
 
-
-AVATAR_SIZE = 256
-FONT_SIZE = 120
-
-BACKGROUND_COLORS = (
-    '#DCEBFF',
-    '#E7F8EA',
-    '#FFF1D6',
-    '#F3E8FF',
-    '#FFE4E6',
-    '#E0F2FE',
+from team_finder.constants import (
+    AVATAR_BACKGROUND_COLORS,
+    AVATAR_FONT_SIZE,
+    AVATAR_SIZE,
+    AVATAR_TEXT_COLOR,
 )
-
-TEXT_COLOR = '#111111'
 
 
 def get_first_letter(name):
@@ -27,6 +19,13 @@ def get_first_letter(name):
         return '?'
 
     return name[0].upper()
+
+
+def get_default_font():
+    try:
+        return ImageFont.load_default(size=AVATAR_FONT_SIZE)
+    except TypeError:
+        return ImageFont.load_default()
 
 
 def get_font():
@@ -38,14 +37,14 @@ def get_font():
     )
 
     try:
-        return ImageFont.truetype(str(font_path), FONT_SIZE)
+        return ImageFont.truetype(str(font_path), AVATAR_FONT_SIZE)
     except OSError:
-        return ImageFont.load_default()
+        return get_default_font()
 
 
 def generate_avatar_image(name):
     first_letter = get_first_letter(name)
-    background_color = random.choice(BACKGROUND_COLORS)
+    background_color = random.choice(AVATAR_BACKGROUND_COLORS)
 
     image = Image.new(
         'RGB',
@@ -65,7 +64,7 @@ def generate_avatar_image(name):
     draw.text(
         (x, y),
         first_letter,
-        fill=TEXT_COLOR,
+        fill=AVATAR_TEXT_COLOR,
         font=font,
     )
 
