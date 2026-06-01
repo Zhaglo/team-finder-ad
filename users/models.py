@@ -2,6 +2,13 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.db import models
 
 from projects.models import Project
+from team_finder.constants import (
+    USER_ABOUT_MAX_LENGTH,
+    USER_NAME_MAX_LENGTH,
+    USER_PHONE_MAX_LENGTH,
+    USER_SURNAME_MAX_LENGTH,
+)
+
 from .managers import UserManager
 from .avatar import generate_user_avatar
 
@@ -12,28 +19,23 @@ def user_avatar_upload_path(instance, filename):
 
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(
-        blank=False,
         unique=True,
         verbose_name='Email'
     )
     name = models.CharField(
-        max_length=124,
-        blank=False,
+        max_length=USER_NAME_MAX_LENGTH,
         verbose_name='Имя'
     )
     surname = models.CharField(
-        max_length=124,
-        blank=False,
+        max_length=USER_SURNAME_MAX_LENGTH,
         verbose_name='Фамилия'
     )
     avatar = models.ImageField(
         upload_to=user_avatar_upload_path,
-        blank=False,
         verbose_name='Аватар'
     )
     phone = models.CharField(
-        max_length=12,
-        blank=False,
+        max_length=USER_PHONE_MAX_LENGTH,
         verbose_name='Телефон'
     )
     github_url = models.URLField(
@@ -41,7 +43,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name='GitHub'
     )
     about = models.TextField(
-        max_length=256,
+        max_length=USER_ABOUT_MAX_LENGTH,
         blank=True,
         verbose_name='Описание профиля'
     )
