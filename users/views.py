@@ -2,7 +2,9 @@ from django.contrib.auth import get_user_model, login, logout, update_session_au
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 
+from team_finder.constants import USERS_PER_PAGE
 from team_finder.pagination import paginate_queryset
+
 from .forms import (
     CustomPasswordChangeForm,
     LoginForm,
@@ -13,18 +15,13 @@ from .forms import (
 
 User = get_user_model()
 
-USERS_PER_PAGE = 12
-
 
 def register(request):
-    if request.method == 'POST':
-        form = RegisterForm(request.POST)
+    form = RegisterForm(request.POST or None)
 
-        if form.is_valid():
-            form.save()
-            return redirect('users:login')
-    else:
-        form = RegisterForm()
+    if form.is_valid():
+        form.save()
+        return redirect('users:login')
 
     return render(
         request,
@@ -36,14 +33,11 @@ def register(request):
 
 
 def login_view(request):
-    if request.method == 'POST':
-        form = LoginForm(request, request.POST)
+    form = LoginForm(request, request.POST or None)
 
-        if form.is_valid():
-            login(request, form.get_user())
-            return redirect('projects:project_list')
-    else:
-        form = LoginForm(request)
+    if form.is_valid():
+        login(request, form.get_user())
+        return redirect('projects:project_list')
 
     return render(
         request,
@@ -122,18 +116,15 @@ def user_detail(request, user_id):
 
 @login_required
 def edit_profile(request):
-    if request.method == 'POST':
-        form = ProfileEditForm(
-            request.POST,
-            request.FILES,
-            instance=request.user,
-        )
+    form = ProfileEditForm(
+        request.POST or None,
+        request.FILES or None,
+        instance=request.user,
+    )
 
-        if form.is_valid():
-            form.save()
-            return redirect('users:user_detail', user_id=request.user.id)
-    else:
-        form = ProfileEditForm(instance=request.user)
+    if form.is_valid():
+        form.save()
+        return redirect('users:user_detail', user_id=request.user.id)
 
     return render(
         request,
@@ -147,15 +138,12 @@ def edit_profile(request):
 
 @login_required
 def change_password(request):
-    if request.method == 'POST':
-        form = CustomPasswordChangeForm(request.user, request.POST)
+    form = CustomPasswordChangeForm(request.user, request.POST or None)
 
-        if form.is_valid():
-            user = form.save()
-            update_session_auth_hash(request, user)
-            return redirect('users:user_detail', user_id=request.user.id)
-    else:
-        form = CustomPasswordChangeForm(request.user)
+    if form.is_valid():
+        user = form.save()
+        update_session_auth_hash(request, user)
+        return redirect('users:user_detail', user_id=request.user.id)
 
     return render(
         request,
