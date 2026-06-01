@@ -5,6 +5,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.exceptions import ValidationError
 
+from team_finder.form_mixins import GithubUrlValidatorMixin
 from .models import User
 
 
@@ -78,7 +79,7 @@ class LoginForm(forms.Form):
         return self.user
 
 
-class ProfileEditForm(forms.ModelForm):
+class ProfileEditForm(GithubUrlValidatorMixin, forms.ModelForm):
     class Meta:
         model = User
         fields = ('name', 'surname', 'avatar', 'about', 'phone', 'github_url')
@@ -122,14 +123,6 @@ class ProfileEditForm(forms.ModelForm):
             raise ValidationError('Пользователь с таким номером телефона уже существует.')
 
         return normalized_phone
-
-    def clean_github_url(self):
-        github_url = self.cleaned_data.get('github_url')
-
-        if github_url and 'github.com' not in github_url.lower():
-            raise ValidationError('Ссылка должна вести на GitHub.')
-
-        return github_url
 
 
 class CustomPasswordChangeForm(PasswordChangeForm):
