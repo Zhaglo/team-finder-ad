@@ -6,6 +6,7 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.core.exceptions import ValidationError
 
 from team_finder.form_mixins import GithubUrlValidatorMixin
+
 from .models import User
 
 
