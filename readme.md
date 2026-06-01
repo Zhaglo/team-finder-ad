@@ -86,7 +86,6 @@ POSTGRES_USER=teamfinder_user
 POSTGRES_PASSWORD=teamfinder_password
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
-TASK_VERSION=1
 ```
 
 ### 5. Запустить PostgreSQL
@@ -163,3 +162,7 @@ http://127.0.0.1:8000/admin/
 /users/edit-profile/                редактирование профиля
 /users/change-password/             смена пароля
 ```
+
+---
+Работу выполнил **Жагло И. Д.**\
+Почта: **jagloig@yandex.ru**
